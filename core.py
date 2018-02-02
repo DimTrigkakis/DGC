@@ -185,7 +185,7 @@ class GraphCutter(object):
         if parameters["nlink_sigma"] <= 0:
             sigma = np.sqrt(np.mean(w_feat))
 
-        weights = np.multiply(np.exp(np.multiply(-1 / (2 * sigma ** 2), w_feat)),np.divide(1, euclidiean_distance))
+        weights = np.multiply(np.exp(np.multiply(-1.0 / (2 * sigma ** 2), w_feat)),np.divide(1, euclidiean_distance))
 
         #print(weights)
         return weights, euclidiean_distance
@@ -214,7 +214,7 @@ class GraphCutter(object):
 
     def graph(
             self, polylines={},
-            parameters={'bins': 8, 'sigma': 7, 'interaction_cost': 50, 'stroke_dt': True, 'stroke_var': 50,'hard_seeds': True},\
+            parameters={'bins': 8, 'sigma': 7.0, 'interaction_cost': 50, 'stroke_dt': True, 'stroke_var': 50,'hard_seeds': True},\
             options={'file': None, 'image_rgb': None, 'resize': False,'w': 0, 'h': 0, 'blur': True, 'show_figures': True, 'log': False, 'debug': False}):
 
         log = None
@@ -292,8 +292,8 @@ class GraphCutter(object):
 
             dist_transform = cv2.distanceTransform(np_bg_mask, cv2.DIST_L2, maskSize=3)
             dist_transform2 = cv2.distanceTransform(np_bg_mask, cv2.DIST_L2, maskSize=3)
-            strokeDT = np.exp(-dist_transform / parameters['stroke_var'])
-            strokeDT2 = np.exp(-dist_transform2 / parameters['stroke_var'])
+            strokeDT = np.exp(-dist_transform / (parameters['stroke_var']*1.0))
+            strokeDT2 = np.exp(-dist_transform2 / (parameters['stroke_var']* 1.0))
 
             dst['fg'] = dst['fg'] * (strokeDT)
             dst['bg'] = dst['bg'] * (strokeDT2)
@@ -356,7 +356,7 @@ GC = GraphCutter()
 my_polylines = {'bg': [], 'fg': []}
 my_options = {'file': "sample_input.jpg", 'image': None, 'resize': True, 'w': 32, 'h': 32, 'o_w': 1, 'o_h': 1, 'blur': True,
               'show_figures': True, 'debug': True, 'log': True}
-my_parameters = {'bins': 8, 'sigma': 7, 'interaction_cost': 50, 'stroke_dt': True, 'hard_seeds': False, 'stroke_var': 1}
+my_parameters = {'bins': 8, 'sigma': 7.0, 'interaction_cost': 50, 'stroke_dt': True, 'hard_seeds': False, 'stroke_var': 1}
 
 # Sample cuts, coordinates are 0,0 top-left corner, transformed with tw, th
 my_polylines['bg'].append(polyline([{'x': 0, 'y': 0}, {'x': 50, 'y': 0}, {'x': 100, 'y': 20}]))
