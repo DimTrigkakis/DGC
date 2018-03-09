@@ -89,7 +89,6 @@ class GraphCutter(object):
         self.show_figures = show_figures
 
     def show(self, image_data, name):
-        return
         assert image_data is not None
         if not self.options['show_figures']:
             return
@@ -116,70 +115,59 @@ class GraphCutter(object):
 
         if connectivity == 8 and r != 0 and c != 0:
             N = r * c
-            M = r * (c - 1) + (r - 1) * c + 2 * (r - 1) * (c - 1);
+            M = r * (c - 1) + (r - 1) * c + 2 * (r - 1) * (c - 1)
             edges = np.zeros((M, 2), dtype=np.int32)
             edge_nodes = np.arange(N)
             edge_nodes = edge_nodes.reshape((r, c))
 
             Mtemp = r * (c - 1)
-
             edges[0:Mtemp, :] = \
-                np.concatenate((edge_nodes[:, 0:c - 1].reshape((r * (c - 1), 1)), \
-                                edge_nodes[:, 1:c].reshape((r * (c - 1), 1))), axis=1)
+                np.concatenate((edge_nodes[:, 0:c - 1].reshape((r * (c - 1), 1)), edge_nodes[:, 1:c].reshape((r * (c - 1), 1))), axis=1)
 
             edges[Mtemp:Mtemp + (r - 1) * c, :] = \
-                np.concatenate((edge_nodes[0:r - 1, :].reshape(((r - 1) * c, 1)), \
-                                edge_nodes[1:r, :].reshape(((r - 1) * c, 1))), axis=1)
+                np.concatenate((edge_nodes[0:r - 1, :].reshape(((r - 1) * c, 1)), edge_nodes[1:r, :].reshape(((r - 1) * c, 1))), axis=1)
 
             Mtemp = Mtemp + (r - 1) * c
 
             edges[Mtemp:Mtemp + (r - 1) * (c - 1), :] = \
-                np.concatenate((edge_nodes[0:r - 1, 0:c - 1].reshape((r - 1) * (c - 1), 1), \
-                                edge_nodes[1:r, 1:c].reshape(((r - 1) * (c - 1), 1))), axis=1)
+                np.concatenate((edge_nodes[0:r - 1, 0:c - 1].reshape((r - 1) * (c - 1), 1), edge_nodes[1:r, 1:c].reshape(((r - 1) * (c - 1), 1))), axis=1)
 
             Mtemp = Mtemp + (r - 1) * (c - 1)
 
             edges[Mtemp:Mtemp + (r - 1) * (c - 1), :] = \
-                np.concatenate((edge_nodes[0:r - 1, 1:c].reshape((r - 1) * (c - 1), 1), \
-                                edge_nodes[1:r, 0:c - 1].reshape(((r - 1) * (c - 1), 1))), axis=1)
+                np.concatenate((edge_nodes[0:r - 1, 1:c].reshape((r - 1) * (c - 1), 1), edge_nodes[1:r, 0:c - 1].reshape(((r - 1) * (c - 1), 1))), axis=1)
 
             return edges
 
-    def edge_weights(self, parameters={"edges": None, \
-                                       "image": None, "lattice_size": (0, 0, 0), "nlink_sigma": 0}):
+    def edge_weights(self, parameters={"edges": None, "image": None, "lattice_size": (0, 0, 0), "nlink_sigma": 0}):
 
-        r, c, z = parameters["lattice_size"]
-        X, Y, Z = np.meshgrid(np.arange(0, c), np.arange(0, r), np.arange(0, z))
+        r, c = parameters["lattice_size"]
+        X, Y = np.meshgrid(np.arange(0, c), np.arange(0, r))
         edges = parameters["edges"]
         I = parameters["image"]
 
-        X0 = X[np.multiply(edges[:, 0], 1.0 / r).astype(np.int32), np.remainder(edges[:, 0], c).astype(np.int32)]
-        X1 = X[np.multiply(edges[:, 1], 1.0 / r).astype(np.int32), np.remainder(edges[:, 1], c).astype(np.int32)]
+        self.show(I,"I.jpg")
+        self.show(X,"X.jpg")
+        self.show(Y,"Y.jpg")
+
+        X0 = X[np.remainder(edges[:, 0], r).astype(np.int32), np.multiply(edges[:, 0], 1.0 / (r)).astype(np.int32)]
+        X1 = X[np.remainder(edges[:, 1], r).astype(np.int32), np.multiply(edges[:, 1], 1.0 / (r)).astype(np.int32)]
         X_star = np.power(np.subtract(X0, X1), 2)
-        Y0 = Y[np.multiply(edges[:, 0], 1.0 / r).astype(np.int32), np.remainder(edges[:, 0], c).astype(np.int32)]
-        Y1 = Y[np.multiply(edges[:, 1], 1.0 / r).astype(np.int32), np.remainder(edges[:, 1], c).astype(np.int32)]
+
+        Y0 = Y[np.remainder(edges[:, 0], r).astype(np.int32), np.multiply(edges[:, 0], 1.0 / (r)).astype(np.int32)]
+        Y1 = Y[np.remainder(edges[:, 1], r).astype(np.int32), np.multiply(edges[:, 1], 1.0 / (r)).astype(np.int32)]
         Y_star = np.power(np.subtract(Y0, Y1), 2)
-        Z0 = Z[np.multiply(edges[:, 0], 1.0 / r).astype(np.int32), np.remainder(edges[:, 0], c).astype(np.int32)]
-        Z1 = Z[np.multiply(edges[:, 1], 1.0 / r).astype(np.int32), np.remainder(edges[:, 1], c).astype(np.int32)]
-        Z_star = np.power(np.subtract(Z0, Z1), 2)
-        euclidiean_distance = np.sqrt(np.add(np.add(Z_star, X_star), Y_star))[:, 0]
 
+        euclidiean_distance = np.sqrt(np.add(X_star, Y_star))
 
-        I0 = I[np.multiply(edges[:, 0], 1.0 / r).astype(np.int32), np.remainder(edges[:, 0], c).astype(np.int32), :].astype(np.float32)
-        I1 = I[np.multiply(edges[:, 1], 1.0 / r).astype(np.int32), np.remainder(edges[:, 1], c).astype(np.int32), :].astype(np.float32)
+        I0 = I[np.remainder(edges[:, 0], r).astype(np.int32),np.multiply(edges[:, 0], 1.0 / (r)).astype(np.int32)].astype(np.float32)
+        I1 = I[np.remainder(edges[:, 1], r).astype(np.int32),np.multiply(edges[:, 1], 1.0 / (r)).astype(np.int32)].astype(np.float32)
 
         k = 2
-
-        '''
-        self.show(I0,"./I0.jpg")
-        self.show(I1,"./I1.jpg")
-        self.show(np.abs(np.subtract(I0,I1)),"./Idiff.jpg")
-        self.show(np.sum(np.power(np.abs(np.subtract(I0, I1)), k), 1)[None,:],"./Idiff2.jpg"
-        '''
-
-        w_feat = np.sum(np.power(np.abs(np.subtract(I0, I1)), k), 1)
-        # print(euclidiean_distance, np.max(euclidiean_distance), np.min(euclidiean_distance))
-        # print(w_feat, np.max(w_feat), np.min(w_feat))
+        #print(I[0,0])
+        #print(I0[0], I1[0])
+        w_feat = np.power(np.abs(np.subtract(I0, I1)), k)
+        self.show(w_feat.reshape(-1,1),"wfeat.jpg")
 
         sigma = parameters["nlink_sigma"]
         if parameters["nlink_sigma"] <= 0:
@@ -187,18 +175,18 @@ class GraphCutter(object):
 
         weights = np.multiply(np.exp(np.multiply(-1.0 / (2 * sigma ** 2), w_feat)),np.divide(1, euclidiean_distance))
 
-        #print(weights)
         return weights, euclidiean_distance
 
     def vrl_gc(self, sizes, fg, bg, edges, weights):
 
+        #print(sizes, fg.shape, bg.shape)
         grid_size = sizes[1] * sizes[2]
         g = maxflow.Graph[float](grid_size, (2 * grid_size) + (2 * sizes[3]))
 
         nodeids = g.add_nodes(grid_size)
 
         for i in range(grid_size):
-            g.add_tedge(i, fg[int(i / sizes[1]), i % sizes[2]], bg[int(i / sizes[1]), i % sizes[2]])
+            g.add_tedge(i, fg[int(i % sizes[1]), int(i / sizes[1])], bg[int(i % sizes[1]), int(i / sizes[1])])
 
         for i in range(sizes[3]):
             g.add_edge(edges[i, 0], edges[i, 1], weights[i], weights[i])
@@ -206,8 +194,8 @@ class GraphCutter(object):
         flows = g.maxflow()
         output = np.zeros((sizes[1], sizes[2]))
         for i in range(len(nodeids)):
-            output[int(i / sizes[1]), i % sizes[2]] = g.get_segment(nodeids[i])
-        # print(g.get_segment(nodeids[0]))
+            output[int(i % sizes[1]), int(i / sizes[1])] = g.get_segment(nodeids[i])
+        #print(g.get_segment(nodeids[0]))
         return output
 
         #return np.add(np.multiply(np.ones((sizes[1], sizes[2])), 1 / 4.0), np.random.rand(sizes[1], sizes[2]))
@@ -235,11 +223,6 @@ class GraphCutter(object):
         assert o_c == 3
         self.scaling = {'w': 1.0, 'h': 1.0}
 
-        '''
-        self.I = np.random.rand(64,64,3)
-        self.I = np.clip(self.I,0,1)
-        self.I = np.multiply(self.I,255).astype(np.uint8)
-        '''
         self.show(self.I,"OriginalImage.jpg")
 
         if options['resize']:
@@ -248,11 +231,16 @@ class GraphCutter(object):
             self.show(resized_image,"ResizedImage.jpg")
         else:
             resized_image = self.I
+            options['w'] = self.I.shape[1]
+            options['h'] = self.I.shape[0]
 
         # log.log("h x w x c --- input image {} transformed to {} with scaling {:0.2f}, {:0.2f}".format(self.I.shape, (
         # options['h'], options['w'], 3), *self.scaling.values()))
 
-        blur = cv2.GaussianBlur(resized_image, (5, 5), 1.4)
+        blur = resized_image[:,:,1]
+        self.show(blur,"BlurredImage_beforeGauss.jpg")
+        blur = cv2.GaussianBlur(blur, (3, 3), 1.4)
+
         # polyline transformation to produce numpy pixel masks
         np_bg_mask = np.zeros((options['h'], options['w']), np.uint8)
         np_fg_mask = np.zeros((options['h'], options['w']), np.uint8)
@@ -272,33 +260,29 @@ class GraphCutter(object):
         #print("entering polyline keys")
         for loc in polylines.keys():
             mask = np_bg_mask if loc == 'bg' else np_fg_mask
-
-            # calculating object histogram for hue and value until opencv has triple backprojects
-            hv_blurred = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
-            channels = [0, 2]
-            ranges = [0, 180, 0, 256]
-            histograms[loc] = cv2.calcHist([hv_blurred], channels, mask,[parameters['bins'],parameters['bins']], ranges)
-            cv2.normalize(histograms[loc], histograms[loc], 0, 255, cv2.NORM_MINMAX)
-            dst[loc] = cv2.calcBackProject([hv_blurred], [0, 2], histograms[loc], [0, 180, 0, 256], 1)
-
-
+            channels = [0, 1, 2]
+            ranges = [0, 256, 0 ,256, 0, 256]
+            histograms[loc] = cv2.calcHist([resized_image], channels, mask,[parameters['bins'] for i in channels], ranges)
+            histograms[loc] = histograms[loc] / np.sum(histograms[loc])
+            b, g, r = cv2.split(resized_image / (256.0 / parameters['bins']))
+            dst[loc] = np.float32(histograms[loc][b.astype(np.uint64).ravel(), g.astype(np.uint64).ravel(), r.astype(np.uint64).ravel()])
+            dst[loc] = dst[loc].reshape(resized_image.shape[:2])
             self.show(dst[loc],"back-projection"+str(loc)+".jpg")
-            dst[loc][dst[loc] == 0] = 1
-            # 1 - 255 range for dst[loc]
-
-        #print("done")
+            #print("Sum for {} is {}".format(loc, np.sum(dst[loc])))
 
         if parameters['stroke_dt']:
-
-            dist_transform = cv2.distanceTransform(np_bg_mask, cv2.DIST_L2, maskSize=3)
-            dist_transform2 = cv2.distanceTransform(np_bg_mask, cv2.DIST_L2, maskSize=3)
+            #print(np.max(np_fg_mask))
+            dist_transform = cv2.distanceTransform(255-np_fg_mask, cv2.DIST_L2, maskSize=3)
+            #dist_transform2 = cv2.distanceTransform(np_bg_mask, cv2.DIST_L2, maskSize=3)
             strokeDT = np.exp(-dist_transform / (parameters['stroke_var']*1.0))
-            strokeDT2 = np.exp(-dist_transform2 / (parameters['stroke_var']* 1.0))
-
+            #strokeDT2 = np.exp(-dist_transform2 / (parameters['stroke_var']* 1.0))
+            #print(np.min(strokeDT))
+            #print(np.max(strokeDT))
             dst['fg'] = dst['fg'] * (strokeDT)
-            dst['bg'] = dst['bg'] * (strokeDT2)
+            dst['bg'] = dst['bg'] * (1-strokeDT)
             self.show(dst['fg'],"back-projection"+str('fg_DT_')+".jpg")
             self.show(dst['bg'],"back-projection"+str('bg_DT_')+".jpg")
+            #print("Sum for {} is {}".format('fg', np.sum(dst['fg'])))
 
         for loc in polylines.keys():
             dst[loc] = -np.log(dst[loc]+0.01)
@@ -311,19 +295,19 @@ class GraphCutter(object):
                 #     np.median(dst[loc]))
 
         # edges is a numpy array of all node pairs in edges of a lattice of size w x h
-        edges = self.lattice_constructor(lattice_size=(options['h'], options['w']))
 
-        edge_parameters = {"edges": edges, "image": blur, "lattice_size": (options['h'], options['w'], 3), "nlink_sigma": parameters['sigma']}
+        lattice_size = (options['w'], options['h'])
+        edges = self.lattice_constructor(lattice_size=lattice_size)
 
-        weights, w_dist = self.edge_weights(edge_parameters)
+        edge_parameters = {"edges": edges, "image": blur, "lattice_size": lattice_size[::-1], "nlink_sigma": parameters['sigma']}
+        weights, w_dist = self.edge_weights(edge_parameters) # Image should be inverted to previous state, DT transform, hard seeds
         weights = np.expand_dims(weights, axis=1)
 
+        #(weights)
         # set up all parameters to create the graph algorithm
         sizes = [2, options['h'], options['w'], edges.shape[0]]
-
-        seg_fg = self.vrl_gc(sizes, dst['fg'], dst['bg'], np.subtract(edges, 1),
-                             np.multiply(weights, parameters["interaction_cost"])).reshape((options['h'], options['w']))
-
+        #print(dst['fg'].shape)
+        seg_fg = self.vrl_gc(sizes, dst['fg'], dst['bg'], np.subtract(edges, 1), np.multiply(weights, parameters["interaction_cost"]))
 
         zero_padding = 1
         seg_fg[:zero_padding,:] = 0
@@ -335,18 +319,28 @@ class GraphCutter(object):
 
         seg_fg = seg_fg[::-1,:]
         seg = measure.find_contours(seg_fg, 0.8)
+        self.show(seg_fg,"segmentation_f.jpg")
 
-        '''
+        max_points = 0
+        m = None
+        try:
+            test_try = seg[0][0]
+            for i in range(len(seg)):
+                if len(seg[i]) > max_points:
+                    max_points = len(seg[i])
+                    m = seg[i]
+        except:
+            m = seg
+        seg = m
+        seg = seg[::,::]
         # Display the image and plot all contours found
         fig, ax = plt.subplots()
-
-        for n, contour in enumerate(seg):
-            ax.plot(contour[:, 1], contour[:, 0], linewidth=2)
+        ax.imshow(self.I)
+        ax.plot(seg[:,1], self.I.shape[0]-seg[:,0], linewidth=2)
 
         ax.axis('image')
         plt.show()
         fig.savefig("./figure.jpg")
-        '''
 
         return {'segmentation':seg,'polylines':polylines, 'options': options, 'parameters':parameters}
 
@@ -354,14 +348,12 @@ class GraphCutter(object):
 
 GC = GraphCutter()
 my_polylines = {'bg': [], 'fg': []}
-my_options = {'file': "sample_input.jpg", 'image': None, 'resize': True, 'w': 32, 'h': 32, 'o_w': 1, 'o_h': 1, 'blur': True,
+my_options = {'file': "sample_input.jpg", 'image': None, 'resize': True, 'w': 481, 'h': 321, 'o_w': 481, 'o_h': 321, 'blur': True,
               'show_figures': True, 'debug': True, 'log': True}
-my_parameters = {'bins': 8, 'sigma': 7.0, 'interaction_cost': 50, 'stroke_dt': True, 'hard_seeds': False, 'stroke_var': 1}
+my_parameters = {'bins': 8, 'sigma': 7.0, 'interaction_cost': 50, 'stroke_dt': True, 'hard_seeds': True, 'stroke_var': 50}
 
 # Sample cuts, coordinates are 0,0 top-left corner, transformed with tw, th
-my_polylines['bg'].append(polyline([{'x': 0, 'y': 0}, {'x': 50, 'y': 0}, {'x': 100, 'y': 20}]))
-my_polylines['bg'].append(polyline([{'x': 240, 'y': 300}, {'x': 290, 'y': 300}]))
-my_polylines['fg'].append(polyline([{'x': 150, 'y': 150}, {'x': 170, 'y': 150}]))
-my_polylines['fg'].append(polyline([{'x': 150, 'y': 150}, {'x': 150, 'y': 190}]))
+my_polylines['bg'].append(polyline([{'x': 2, 'y': 2}, {'x': 10, 'y': 10}]))
+my_polylines['fg'].append(polyline([{'x': 201, 'y': 160}, {'x': 281, 'y': 160}]))
 
 out = GC.graph(polylines=my_polylines, options=my_options, parameters=my_parameters)
