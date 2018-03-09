@@ -8,4 +8,4 @@ The original code for computing max-flow/min-cut is contained in the pymaxflow p
 
 Example results:
 
-![alt text](https://github.com/DimTrigkakis/DGC/blob/master/owls.png)
+![alt text](https://github.com/DimTrigkakis/DGC/blob/master/owls_result.png)
